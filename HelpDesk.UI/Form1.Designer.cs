@@ -284,6 +284,7 @@
             chkConfirmDelete.TabIndex = 17;
             chkConfirmDelete.Text = "Confirm Delete?";
             chkConfirmDelete.UseVisualStyleBackColor = true;
+            chkConfirmDelete.CheckedChanged += chkConfirmDelete_CheckedChanged;
             // 
             // btnClearAll
             // 
@@ -292,8 +293,9 @@
             btnClearAll.Name = "btnClearAll";
             btnClearAll.Size = new Size(162, 30);
             btnClearAll.TabIndex = 16;
-            btnClearAll.Text = "Delete Ticket";
+            btnClearAll.Text = "Clear All";
             btnClearAll.UseVisualStyleBackColor = true;
+            btnClearAll.Click += btnClearAll_Click;
             // 
             // btnDeleleteTicket
             // 
@@ -304,6 +306,7 @@
             btnDeleleteTicket.TabIndex = 15;
             btnDeleleteTicket.Text = "Delete Ticket";
             btnDeleleteTicket.UseVisualStyleBackColor = true;
+            btnDeleleteTicket.Click += btnDeleleteTicket_Click;
             // 
             // groupBox3
             // 
@@ -317,34 +320,37 @@
             groupBox3.Margin = new Padding(2);
             groupBox3.Name = "groupBox3";
             groupBox3.Padding = new Padding(2);
-            groupBox3.Size = new Size(470, 68);
+            groupBox3.Size = new Size(580, 68);
             groupBox3.TabIndex = 3;
             groupBox3.TabStop = false;
             groupBox3.Text = "Searching and Filtering";
             // 
             // btnResetFilter
             // 
-            btnResetFilter.Location = new Point(364, 37);
+            btnResetFilter.Location = new Point(410, 37);
             btnResetFilter.Margin = new Padding(2);
             btnResetFilter.Name = "btnResetFilter";
-            btnResetFilter.Size = new Size(99, 20);
+            btnResetFilter.Size = new Size(125, 23);
             btnResetFilter.TabIndex = 5;
             btnResetFilter.Text = "Reset Filter";
             btnResetFilter.UseVisualStyleBackColor = true;
+            btnResetFilter.Click += btnResetFilter_Click;
             // 
             // btnApplyFilter
             // 
             btnApplyFilter.Location = new Point(273, 37);
             btnApplyFilter.Margin = new Padding(2);
             btnApplyFilter.Name = "btnApplyFilter";
-            btnApplyFilter.Size = new Size(87, 20);
+            btnApplyFilter.Size = new Size(118, 24);
             btnApplyFilter.TabIndex = 4;
             btnApplyFilter.Text = "Apply Filter";
             btnApplyFilter.UseVisualStyleBackColor = true;
+            btnApplyFilter.Click += btnApplyFilter_Click;
             // 
             // cmbFilterStatus
             // 
             cmbFilterStatus.FormattingEnabled = true;
+            cmbFilterStatus.Items.AddRange(new object[] { "All", "New", "In-Progress", "Resolved", "Closed" });
             cmbFilterStatus.Location = new Point(141, 38);
             cmbFilterStatus.Margin = new Padding(2);
             cmbFilterStatus.Name = "cmbFilterStatus";
@@ -364,6 +370,7 @@
             // cmbFilterCategory
             // 
             cmbFilterCategory.FormattingEnabled = true;
+            cmbFilterCategory.Items.AddRange(new object[] { "All", "Hardware", "Software", "Network", "Account Access", "Others" });
             cmbFilterCategory.Location = new Point(10, 38);
             cmbFilterCategory.Margin = new Padding(2);
             cmbFilterCategory.Name = "cmbFilterCategory";
@@ -388,7 +395,7 @@
             dgTickets.Margin = new Padding(2);
             dgTickets.Name = "dgTickets";
             dgTickets.RowHeadersWidth = 62;
-            dgTickets.Size = new Size(896, 450);
+            dgTickets.Size = new Size(997, 572);
             dgTickets.TabIndex = 4;
             dgTickets.CellClick += dgTickets_CellClick;
             // 
@@ -396,10 +403,10 @@
             // 
             statusStrip1.ImageScalingSize = new Size(24, 24);
             statusStrip1.Items.AddRange(new ToolStripItem[] { lblStatus, lblCounts });
-            statusStrip1.Location = new Point(0, 612);
+            statusStrip1.Location = new Point(0, 726);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Padding = new Padding(1, 0, 10, 0);
-            statusStrip1.Size = new Size(1362, 22);
+            statusStrip1.Size = new Size(1453, 22);
             statusStrip1.TabIndex = 5;
             statusStrip1.Text = "statusStrip1";
             // 
@@ -417,7 +424,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1362, 634);
+            ClientSize = new Size(1453, 748);
             Controls.Add(statusStrip1);
             Controls.Add(dgTickets);
             Controls.Add(groupBox3);
@@ -428,6 +435,7 @@
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "HelpDesk Application";
+            WindowState = FormWindowState.Maximized;
             Load += Form1_Load;
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();

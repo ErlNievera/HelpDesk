@@ -15,7 +15,7 @@ namespace HelpDesk.DTO
         public string AssignedEmployee { get; set; }
         public string Status { get; set; }
         public DateTime DateCreated { get; set; }
-        public string? ResolutionNotes { get; set; }
+        public string ResolutionNotes { get; set; }
         public DateTime? DateResolved { get; set; }
     }
 }

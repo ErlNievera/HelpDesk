@@ -13,7 +13,7 @@ namespace HelpDesk.Model
         public string Description { get; set; }
         public int CategoryId { get; set; }
         public TicketCategory Category { get; set; }
-        public int AssignedEmployeeId { get; set; }
+        public int? AssignedEmployeeId { get; set; }
         public Employee AssignedEmployee { get; set; }
         public string Status { get; set; }
         public DateTime DateCreated { get; set; }

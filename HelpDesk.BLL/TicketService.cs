@@ -23,14 +23,15 @@ namespace HelpDesk.BLL
             return _ticketRepository
                 .GetAll(status, category, keyword)
                 .Select(m => new DTO.Ticket 
-                { 
+                {
                     Id = m.Id,
                     IssueTitle = m.IssueTitle,
                     Description = m.Description,
                     Category = m.Category.Name,
-                    AssignedEmployee = m.AssignedEmployee.FullName,
+                    AssignedEmployee = m.AssignedEmployee?.FullName,
                     Status = m.Status,
-                    DateCreated = m.DateCreated
+                    ResolutionNotes = m.ResolutionNotes,
+                    DateResolved = m.DateResolved
                 })
                 .ToList();
         }
@@ -95,22 +96,23 @@ namespace HelpDesk.BLL
                 if (existingTicket == null)
                     return (false, "Ticket not found.");
 
-                if (string.IsNullOrEmpty(ticket.IssueTitle))
-                    return (false, "Title must not be empty!");
+                if (string.IsNullOrWhiteSpace(ticket.IssueTitle))
+                    return (false, "Title must not be empty.");
 
                 if (ticket.CategoryId == null || ticket.CategoryId == 0)
-                    return (false, "Category must be selected!");
+                    return (false, "Category must be selected.");
 
-                if (string.IsNullOrEmpty(ticket.Status))
-                    return (false, "Status must be selected!");
+                if (string.IsNullOrWhiteSpace(ticket.Status))
+                    return (false, "Status must be selected.");
 
-                // Update tracked entity
+                // Update basic fields
                 existingTicket.IssueTitle = ticket.IssueTitle;
                 existingTicket.Description = ticket.Description;
                 existingTicket.CategoryId = ticket.CategoryId;
                 existingTicket.AssignedEmployeeId = ticket.AssignedEmployeeId;
                 existingTicket.Status = ticket.Status;
 
+                // Status handling
                 if (ticket.Status == "New")
                 {
                     existingTicket.ResolutionNotes = null;
@@ -122,20 +124,25 @@ namespace HelpDesk.BLL
                 }
                 else if (ticket.Status == "Resolved" || ticket.Status == "Closed")
                 {
-                    if (string.IsNullOrEmpty(ticket.ResolutionNotes))
-                        return (false, "Resolution must not be empty!");
-
+                    // Resolve validation (AUTHORITATIVE)
                     if (ticket.AssignedEmployeeId == null)
-                        return (false, "Employee must be selected!");
+                        return (false, "Assigned Employee is required.");
+
+                    if (string.IsNullOrWhiteSpace(ticket.ResolutionNotes))
+                        return (false, "Resolution Notes are required.");
 
                     existingTicket.ResolutionNotes = ticket.ResolutionNotes;
                     existingTicket.DateResolved = DateTime.Now;
 
                     if (existingTicket.DateResolved < existingTicket.DateCreated)
-                        return (false, "Date Resolved cannot be earlier than Date Created!");
+                        return (false, "Date Resolved cannot be earlier than Date Created.");
                 }
-                _ticketRepository.Save();
+                else
+                {
+                    return (false, "Invalid ticket status.");
+                }
 
+                _ticketRepository.Save();
                 return (true, "Ticket updated successfully.");
             }
             catch (Exception ex)
