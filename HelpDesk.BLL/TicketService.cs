@@ -18,11 +18,11 @@ namespace HelpDesk.BLL
             _ticketRepository = ticketRepository;
         }
 
-        public List<DTO.Ticket> GetAll(string? status, int? category, string? keyword)
+        public List<DTO.Ticket> GetAll(string? status, int? categoryId, string? keyword)
         {
             return _ticketRepository
-                .GetAll(status, category, keyword)
-                .Select(m => new DTO.Ticket 
+                .GetAll(status, categoryId, keyword)
+                .Select(m => new DTO.Ticket
                 {
                     Id = m.Id,
                     IssueTitle = m.IssueTitle,
@@ -31,7 +31,8 @@ namespace HelpDesk.BLL
                     AssignedEmployee = m.AssignedEmployee?.FullName,
                     Status = m.Status,
                     ResolutionNotes = m.ResolutionNotes,
-                    DateResolved = m.DateResolved
+                    DateResolved = m.DateResolved,
+                    DateCreated = m.DateCreated
                 })
                 .ToList();
         }
@@ -40,40 +41,46 @@ namespace HelpDesk.BLL
         {
             try
             {
-                if (string.IsNullOrEmpty(ticket.IssueTitle))
-                    return (false, "Title must not be empty!");
+                if (string.IsNullOrWhiteSpace(ticket.IssueTitle))
+                    return (false, "Title must not be empty.");
 
                 if (ticket.CategoryId == null || ticket.CategoryId == 0)
-                    return (false, "Category must be selected!");
+                    return (false, "Category must be selected.");
 
-                if (string.IsNullOrEmpty(ticket.Status))
-                    return (false, "Status must be selected!");
+                if (string.IsNullOrWhiteSpace(ticket.Status))
+                    return (false, "Status must be selected.");
 
                 ticket.DateCreated = DateTime.Now;
 
-                if (ticket.Status == "New")
+                // Trim resolution notes to avoid whitespace-only issues
+                ticket.ResolutionNotes = ticket.ResolutionNotes?.Trim();
+
+                switch (ticket.Status)
                 {
-                    ticket.ResolutionNotes = null;
-                    ticket.DateResolved = null;
-                }
+                    case "New":
+                        ticket.ResolutionNotes = null;
+                        ticket.DateResolved = null;
+                        break;
 
-                if (ticket.Status == "In-Progress")
-                {
-                    ticket.DateResolved = null;
-                }
+                    case "In-Progress":
+                        ticket.DateResolved = null;
+                        break;
 
-                if (ticket.Status == "Resolved" || ticket.Status == "Closed")
-                {
-                    if (string.IsNullOrEmpty(ticket.ResolutionNotes))
-                        return (false, "Resolution must not be empty!");
+                    case "Resolved":
+                    case "Closed":
+                        if (string.IsNullOrWhiteSpace(ticket.ResolutionNotes))
+                            return (false, "Resolution Notes are required.");
 
-                    if (ticket.AssignedEmployeeId == null)
-                        return (false, "Employee must be selected!");
+                        if (ticket.AssignedEmployeeId == null)
+                            return (false, "Employee must be assigned.");
 
-                    ticket.DateResolved = DateTime.Now;
+                        ticket.DateResolved = DateTime.Now;
+                        if (ticket.DateResolved < ticket.DateCreated)
+                            return (false, "Date Resolved cannot be earlier than Date Created.");
+                        break;
 
-                    if (ticket.DateResolved < ticket.DateCreated)
-                        return (false, "Date Resolved cannot be earlier than Date Created!");
+                    default:
+                        return (false, "Invalid ticket status.");
                 }
 
                 _ticketRepository.Add(ticket);
@@ -92,7 +99,6 @@ namespace HelpDesk.BLL
             try
             {
                 var existingTicket = _ticketRepository.GetById(ticket.Id);
-
                 if (existingTicket == null)
                     return (false, "Ticket not found.");
 
@@ -105,6 +111,9 @@ namespace HelpDesk.BLL
                 if (string.IsNullOrWhiteSpace(ticket.Status))
                     return (false, "Status must be selected.");
 
+                // Trim resolution notes
+                ticket.ResolutionNotes = ticket.ResolutionNotes?.Trim();
+
                 // Update basic fields
                 existingTicket.IssueTitle = ticket.IssueTitle;
                 existingTicket.Description = ticket.Description;
@@ -113,33 +122,34 @@ namespace HelpDesk.BLL
                 existingTicket.Status = ticket.Status;
 
                 // Status handling
-                if (ticket.Status == "New")
+                switch (ticket.Status)
                 {
-                    existingTicket.ResolutionNotes = null;
-                    existingTicket.DateResolved = null;
-                }
-                else if (ticket.Status == "In-Progress")
-                {
-                    existingTicket.DateResolved = null;
-                }
-                else if (ticket.Status == "Resolved" || ticket.Status == "Closed")
-                {
-                    // Resolve validation (AUTHORITATIVE)
-                    if (ticket.AssignedEmployeeId == null)
-                        return (false, "Assigned Employee is required.");
+                    case "New":
+                        existingTicket.ResolutionNotes = null;
+                        existingTicket.DateResolved = null;
+                        break;
 
-                    if (string.IsNullOrWhiteSpace(ticket.ResolutionNotes))
-                        return (false, "Resolution Notes are required.");
+                    case "In-Progress":
+                        existingTicket.DateResolved = null;
+                        break;
 
-                    existingTicket.ResolutionNotes = ticket.ResolutionNotes;
-                    existingTicket.DateResolved = DateTime.Now;
+                    case "Resolved":
+                    case "Closed":
+                        if (ticket.AssignedEmployeeId == null)
+                            return (false, "Assigned Employee is required.");
 
-                    if (existingTicket.DateResolved < existingTicket.DateCreated)
-                        return (false, "Date Resolved cannot be earlier than Date Created.");
-                }
-                else
-                {
-                    return (false, "Invalid ticket status.");
+                        if (string.IsNullOrWhiteSpace(ticket.ResolutionNotes))
+                            return (false, "Resolution Notes are required.");
+
+                        existingTicket.ResolutionNotes = ticket.ResolutionNotes;
+                        existingTicket.DateResolved = DateTime.Now;
+
+                        if (existingTicket.DateResolved < existingTicket.DateCreated)
+                            return (false, "Date Resolved cannot be earlier than Date Created.");
+                        break;
+
+                    default:
+                        return (false, "Invalid ticket status.");
                 }
 
                 _ticketRepository.Save();
@@ -155,15 +165,10 @@ namespace HelpDesk.BLL
         {
             try
             {
-                // Get all tickets and find the one to delete
-                var ticket = _ticketRepository
-             .GetAll(null, null, null)
-             .FirstOrDefault(t => t.Id == ticketId);
-
+                var ticket = _ticketRepository.GetById(ticketId);
                 if (ticket == null)
                     return (false, "Ticket not found.");
 
-                // Pass the Ticket object, not the ID
                 _ticketRepository.Delete(ticket.Id);
                 _ticketRepository.Save();
 

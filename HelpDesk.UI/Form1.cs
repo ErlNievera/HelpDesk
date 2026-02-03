@@ -39,6 +39,7 @@ namespace HelpDesk.UI
             cmbAssignedTo.DisplayMember = "FullName";
             cmbAssignedTo.ValueMember = "Id";
 
+            cmbStatus.Items.Clear();
             cmbStatus.Items.AddRange(new string[] { "New", "In-Progress", "Resolved", "Closed" });
             cmbStatus.SelectedIndex = 0;
         }
@@ -208,21 +209,10 @@ namespace HelpDesk.UI
                 cmbCategory.Text = ticket.Category;
                 cmbAssignedTo.Text = ticket.AssignedEmployee;
                 cmbStatus.Text = ticket.Status;
-                txtResolution.Text = ticket.ResolutionNotes;
-                lblStatus.Text = ticket.Status;
 
-                if (ticket.Status == "Resolved" || ticket.Status == "Closed")
-                {
-                    txtResolution.Text = ticket.ResolutionNotes ?? "";
-                    lblStatus.Text = ticket.DateResolved.HasValue
-                        ? ticket.DateResolved.Value.ToString("g")
-                        : "Not set";
-                }
-                else
-                {
-                    txtResolution.Text = "";
-                    lblStatus.Text = "";
-                }
+                txtResolution.Text = ticket.ResolutionNotes;
+                
+                
 
             }
         }
